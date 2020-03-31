@@ -3,6 +3,7 @@ package edu.trial.nosetrackingcursorcontrol;
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.GestureDescription;
 import android.content.Context;
+import android.gesture.Gesture;
 import android.graphics.Color;
 import android.graphics.Path;
 import android.graphics.PixelFormat;
@@ -65,7 +66,7 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 	Handler handler;
 
 	//************handler tap vars*************************//
-	int tapDelayTimer =0;
+
 	//**********************UI SCreen variables************************//
 	FrameLayout uiFrameLayout;
 	WindowManager.LayoutParams uiLayoutParams;
@@ -91,12 +92,14 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 		//*******************************SETTING UP THE GUI ON THE SCREEN*************************//
 		uiFrameLayout=new FrameLayout(this);
 		uiLayoutParams=new WindowManager.LayoutParams(
-				WindowManager.LayoutParams.WRAP_CONTENT,
-				WindowManager.LayoutParams.WRAP_CONTENT,
+				WindowManager.LayoutParams.MATCH_PARENT,
+				WindowManager.LayoutParams.MATCH_PARENT,
 				WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
 				WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
 				PixelFormat .TRANSLUCENT
 		);
+		uiLayoutParams.alpha= (float) 0.5;
+
 		uiLayoutParams.gravity=Gravity.CENTER;
 		LayoutInflater inflater=LayoutInflater.from(this);
 
@@ -167,7 +170,8 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 				WindowManager.LayoutParams.WRAP_CONTENT,
 				WindowManager.LayoutParams.WRAP_CONTENT,
 				WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
-				WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE| WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+				WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE| WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+						,
 				PixelFormat.TRANSLUCENT
 		);
 		faceParams.gravity= Gravity.TOP;
@@ -190,7 +194,8 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 				WindowManager.LayoutParams.WRAP_CONTENT,
 				WindowManager.LayoutParams.WRAP_CONTENT,
 				WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
-				WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+				WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+				| WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON,
 				PixelFormat .TRANSLUCENT
 		);
 		cursorParams.gravity=Gravity.TOP|Gravity.LEFT;
@@ -210,6 +215,8 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 			public void handleMessage(Message msg) {
 				super.handleMessage(msg);
 				Bundle bundle=msg.getData();
+
+				//************************CURSOR MOVEMENT CODE STARTS**********************//
 				int []messageArray=bundle.getIntArray("vals");
 				int xDiff=messageArray[0];
 				int yDiff=messageArray[1];
@@ -238,7 +245,7 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 				plusCursorX=xDir*plusCursorX;
 				plusCursorY=yDir*plusCursorY;
 
-				//**********************FATE STILL NOT DECIDED**********************//
+
 				cursorParams.x+=plusCursorX;
 
 				if(cursorParams.x>deviceWidth)cursorParams.x=deviceWidth;
@@ -249,20 +256,14 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 				else if(cursorParams.y<0)cursorParams.y=0;
 
 				myWindowManager.updateViewLayout(cursorFrameLayout,cursorParams);
+				//************************CURSOR MOVEMENT CODE ENDS**********************//
 
+				//*******************Color change code starts**************************//
+				if(fate==NO_ACTION)cursorImageView.setBackgroundColor(Color.WHITE);
+				else if(fate==TAP)cursorImageView.setBackgroundColor(Color.BLUE);
+				else if(fate==LONG_TAP)	cursorImageView.setBackgroundColor(Color.RED);
 
-				//***********************code for the ui screen**********************//
-				Log.d("TAG2","fate="+fate);
-				Log.d("TAG2","longTapReceived="+longTapReceived);
-				if(fate==LONG_TAP && longTapReceived==false){
-					Log.d("TAG2","I have sensed a long tap");
-					longTapReceived=true;
-					myWindowManager.removeView(cursorFrameLayout);
-					myWindowManager.addView(uiFrameLayout,uiLayoutParams);
-					myWindowManager.addView(cursorFrameLayout,cursorParams);
-
-				}
-
+				//*******************Color change code ends**************************//
 
 			}
 		};
@@ -288,13 +289,29 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 	int fate;
 	int TAP=1;
 	int LONG_TAP=2;
-	int NO_ACTION=3;
+	int NO_ACTION=0;
 	int timer=0;
 	boolean teethDetected=false;
 	boolean timerRunning=false;
 	int prevframeTime;
 
+
+
 	int oldCursorParamsX=0,oldCursorParamsY=0;
+	//*****************gesture decision variables************************//
+	boolean thereIsTapPotential=false;
+	boolean firstSignalForLongTapReceived=false;
+	Point oldLongTapPoint;
+	Path dragPath;
+
+	//***************************************gesture related variables****************************//
+	//this description will be dispatched
+	GestureDescription gestureDescription;
+	//we will build the gesture Description with these two
+	GestureDescription.Builder gestureDescriptionBuilder;
+	GestureDescription.StrokeDescription strokeDescription;
+
+
 
 	@Override
 	public void onCameraViewStarted(int width, int height) {
@@ -324,6 +341,8 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 		err=new MatOfFloat();
 		//******************************teeth related variables*****************************//
 		score=0;
+		timer=0;
+
 
 
 	}
@@ -416,6 +435,7 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 		//displacement and directions are ready to be sent to the handler
 
 		//*************************************THE TEETH MODULE**********************************************//
+		//*************************************THE TEETH MODULE**********************************************//
 		MatOfRect teeth=new MatOfRect();
 		haarCascadeClassifierForTeeth.detectMultiScale(mGray, teeth, 1.1, 3,
 				2, new Size(0.01,0.01), new Size(20,20));
@@ -423,18 +443,22 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 		if(teeth.toArray().length>0){
 			Imgproc.rectangle(mRgba,teethArray[0].tl(),teethArray[0].br(),new Scalar(0,0,255),3);
 			teethDetected=true;
-			score=50;
+
 		}else{
 			teethDetected=false;
-			score--;
-			if(score<0)score=0;
-			Log.d("TAG1","score="+score);
-			//Log.d("TAG1","teeth detected="+teethDetected);
 
 		}
 
-		fate=NO_ACTION;//initially let's assume no action
+		if(teethDetected){
+			score=50;
+		}else{
+			score--;
+			if(score<0)score=0;
+		}
 
+		fate=NO_ACTION;
+
+		//******************************THE SCORE WALL HAS BEEN RAISED NOW DECIDING THE FLAGS********************//
 		if(score>0){
 
 			//Log.d("TAG1","score="+score);
@@ -450,32 +474,96 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 				timer= (int) (    timer+   Math.abs(prevframeTime-System.currentTimeMillis() )      ) ;
 				prevframeTime= (int) System.currentTimeMillis();
 				//Log.d("TAG1","Time = "+timer);
-
-
 				if(timer>3000){
 					fate=TAP;
-
 				}
 				if(timer>8000){
 					fate=LONG_TAP;
+				}
+			}
+		}else{
+			timerRunning=false;
+			timer=0;
+
+
+		}
+		Log.d("TAG1","score="+score);
+		Log.d("TAG1","timer="+timer);
+		//******************************TAP POTENTIAL FLAG CONTROLLER**************************//
+		if(fate==NO_ACTION){
+			Log.d("TAG1","I am gonna do nothing");
+			firstSignalForLongTapReceived=false;
+			//cursorImageView.setBackgroundColor(Color.WHITE);
+		} else if(fate==TAP){
+			//cursorImageView.setBackgroundColor(Color.BLUE);
+			thereIsTapPotential=true;
+			Log.d("TAG1","I am gonna TAP");
+		}else if(fate==LONG_TAP){
+			//cursorImageView.setBackgroundColor(Color.RED);
+			thereIsTapPotential=false;
+			Log.d("TAG1","I am gonna LONG TAP");
+
+
+
+		}
+		//**********************IF A TAP IS EXECUTED AS PER LOGIC***********************//
+		if(thereIsTapPotential==true && score==0){
+			Log.d("TAG3","A Tap is executed");
+
+			//****************TAP CODE**********************//
+			//make the tap
+			Path swipePath = new Path();
+			swipePath.moveTo(cursorParams.x+35, cursorParams.y+90);
+			GestureDescription.Builder gestureBuilder = new GestureDescription.Builder();
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+				gestureBuilder.addStroke(new GestureDescription.StrokeDescription(swipePath, 0, 150));
+			}
+			dispatchGesture(gestureBuilder.build(), null, null);
+			thereIsTapPotential=false;
+		}
+		//***************************CODE FOR LONG TAP***********************************//
+		if(fate==LONG_TAP){
+			if(firstSignalForLongTapReceived==false){//i am receiving the first signal for long tap
+				Log.d("TAG3","I just received the first long tap signal");
+				firstSignalForLongTapReceived=true;
+				dragPath=new Path();
+				dragPath.moveTo(cursorParams.x+35,cursorParams.y+90);
+				gestureDescriptionBuilder=new GestureDescription.Builder();
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+					strokeDescription=new GestureDescription.StrokeDescription(dragPath,0,100,true);
 
 				}
-				Log.d("TAG1","timer="+timer+" fate="+fate);
+				gestureDescriptionBuilder.addStroke(strokeDescription);
+				gestureDescription=gestureDescriptionBuilder.build();
+				dispatchGesture(gestureDescription,null,null);
+				oldLongTapPoint=new Point(cursorParams.x+35,cursorParams.y+90);
+				//gestureDescription=new GestureDescription();
+
+			}else{//first signal received already
+				Log.d("TAG3","I am receiving other long tap  signals");
+				//Path dragPath=new Path();
+				int x= (int) oldLongTapPoint.x;
+				int y= (int) oldLongTapPoint.y;
+				//dragPath.moveTo(x,y);
+
+				dragPath.lineTo(cursorParams.x+35,cursorParams.y+90);
+				gestureDescriptionBuilder=new GestureDescription.Builder();
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+					strokeDescription=new GestureDescription.StrokeDescription(dragPath,0,1000,true);
+
+
+				}
+				gestureDescriptionBuilder.addStroke(strokeDescription);
+				gestureDescription=gestureDescriptionBuilder.build();
+				dispatchGesture(gestureDescription,null,null);
+				oldLongTapPoint=new Point(cursorParams.x+35,cursorParams.y+90);
+
 			}
 
-
-		} else if(score==0){//no teeth detected
-			//Log.d("TAG1","score="+score);
-			timer=0;
-			Log.d("TAG1","Timer="+timer);
-			//cursorImageView.setBackgroundColor(Color.WHITE);
-			//Log.d("TAG1","Time = "+timer);
 		}
 
 
-		//*************************************THE TEETH MODULE HAS BEEN COMPLETED**********************************************//
-
-
+		//*************************HANDLER MESSAGING CODE**********************************//
 		int[] messageArray={xDiff,yDiff,xDir,yDir,fate};
 
 		Bundle bundle=new Bundle();
@@ -485,56 +573,7 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 		message.setData(bundle);
 		handler.sendMessage(message);
 
-		//********************NOW DECISION IS BEING TAKEN AS PER FATE****************//
-		if(fate==NO_ACTION){
 
-
-
-			cursorImageView.setBackgroundColor(Color.WHITE);
-			tapDelayTimer =0;
-
-		}else if(fate==TAP){
-
-			if(tapDelayTimer ==0){//no tap delayTimer was there
-				//set the timer
-				tapDelayTimer =100;
-
-				//make the tap
-				Path swipePath = new Path();
-				swipePath.moveTo(cursorParams.x+35, cursorParams.y+90);
-				GestureDescription.Builder gestureBuilder = new GestureDescription.Builder();
-				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-					gestureBuilder.addStroke(new GestureDescription.StrokeDescription(swipePath, 0, 150,true));
-				}
-				dispatchGesture(gestureBuilder.build(), null, null);
-				cursorImageView.setBackgroundColor(Color.BLUE);
-				Log.d("TAG1","Timer="+tapDelayTimer+" and i just made  tap on the screen");
-
-			}else{
-				tapDelayTimer--;
-				if(tapDelayTimer <0){
-					tapDelayTimer =0;
-					Log.d("TAG1","The timer has stopped");
-				}
-				//Log.d("TAG1","Timer="+tapDelayTimer+" and i am decreasing it");
-
-			}
-
-		}else if(fate==LONG_TAP){
-			//Log.d("TAG1","Long Tap");
-			cursorImageView.setBackgroundColor(Color.GREEN);
-
-
-
-
-
-		}
-		//***************************FATE RELATED CODE IS HERE***************************//
-
-
-		oldCursorParamsX=cursorParams.x+35;
-		oldCursorParamsY=cursorParams.y+90;
-		Log.d("TAG1","Setting oldCX="+oldCursorParamsX+",Setting oldCY="+oldCursorParamsY);
 
 		prevmGray=mGray.clone();
 		return  mRgba;
