@@ -1,41 +1,125 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
-    android:layout_width="match_parent"
+    android:layout_width="wrap_content"
     android:background="#E0DBC1"
-    android:layout_height="match_parent">
+    android:layout_gravity="center"
 
-    <Button
-        android:id="@+id/swipeLeftButton"
+    android:layout_height="wrap_content">
+
+
+
+    <LinearLayout
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true"
-        android:layout_marginStart="40dp"
-        android:layout_marginTop="97dp"
-        android:background="#E0B7B7"
-        android:text="Swipe Left" />
+        android:layout_gravity="center"
+        android:layout_height="wrap_content">
 
-    <Button
-        android:id="@+id/swipeRightButton"
+
+        <Button
+            android:layout_margin="5dp"
+            android:id="@+id/customDragButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#E0B7B7"
+            android:text="cusom DRAG" />
+        <Button
+            android:layout_margin="5dp"
+            android:id="@+id/longPressButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#E0B7B7"
+            android:text="long Press" />
+
+
+    </LinearLayout>
+
+
+
+
+    <LinearLayout
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_marginStart="85dp"
-        android:layout_marginTop="100dp"
-        android:layout_toEndOf="@+id/swipeLeftButton"
-        android:background="#E0B7B7"
-        android:text="Swipe Right" />
+        android:layout_gravity="center"
+        android:layout_height="wrap_content">
+        <Button
+            android:layout_margin="5dp"
+            android:id="@+id/recentAppsButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#E0B7B7"
+            android:text="Recents" />
 
-    <Button
-        android:id="@+id/cancelButton"
+        <Button
+            android:layout_margin="5dp"
+            android:id="@+id/homeButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#E0B7B7"
+            android:text="Home" />
+        <Button
+            android:layout_margin="5dp"
+            android:id="@+id/backButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#E0B7B7"
+            android:text="Back" />
+
+
+    </LinearLayout>
+
+
+
+    <LinearLayout
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_marginStart="11dp"
-        android:layout_marginTop="187dp"
-        android:layout_toEndOf="@+id/swipeLeftButton"
-        android:text="cancel" />
+
+        android:layout_height="wrap_content">
+        <Button
+            android:layout_margin="5dp"
+            android:id="@+id/screenShotButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#E0B7B7"
+            android:text="ScreenShot" />
+
+        <Button
+            android:layout_margin="5dp"
+            android:id="@+id/notificationButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#E0B7B7"
+            android:text="Notification" />
+        <Button
+            android:layout_margin="5dp"
+            android:id="@+id/volumeUpButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#E0B7B7"
+            android:text="Vol+" />
+        <Button
+            android:layout_margin="5dp"
+            android:id="@+id/volumeDownButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#E0B7B7"
+            android:text="Vol-" />
+
+    </LinearLayout>
 
 
-</RelativeLayout>
+
+
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_gravity="center"
+        android:layout_height="wrap_content">
+        <Button
+            android:id="@+id/cancelButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="cancel" />
+
+    </LinearLayout>
+
+
+
+</LinearLayout>

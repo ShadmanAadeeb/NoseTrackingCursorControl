@@ -3,7 +3,6 @@ package edu.trial.nosetrackingcursorcontrol;
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.GestureDescription;
 import android.content.Context;
-import android.gesture.Gesture;
 import android.graphics.Color;
 import android.graphics.Path;
 import android.graphics.PixelFormat;
@@ -23,7 +22,6 @@ import android.view.accessibility.AccessibilityEvent;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
-import android.widget.Toast;
 
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.OpenCVLoader;
@@ -70,8 +68,16 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 	//**********************UI SCreen variables************************//
 	FrameLayout uiFrameLayout;
 	WindowManager.LayoutParams uiLayoutParams;
-	Button swipeLeftButton,swipeRightButton,cancelButton;
+	Button homeButton, backButton,cancelButton;
 	boolean longTapReceived=false;
+	boolean longTapReceivedByHandler=false;
+	//********************drawing imageView Layout variables********************//
+	ImageView drawingImageView;
+	WindowManager.LayoutParams drawingLayoutParams;
+	FrameLayout drawingFrameLayout;
+	//*********************side layout related variables*************************//
+	FrameLayout bottomScreenFrameLayout;
+	WindowManager.LayoutParams bottomScreenLayoutParams;
 
 	@Override
 	protected void onServiceConnected() {
@@ -88,123 +94,8 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 		deviceWidth = displayMetrics.widthPixels;
 
 
-
-		//*******************************SETTING UP THE GUI ON THE SCREEN*************************//
-		uiFrameLayout=new FrameLayout(this);
-		uiLayoutParams=new WindowManager.LayoutParams(
-				WindowManager.LayoutParams.MATCH_PARENT,
-				WindowManager.LayoutParams.MATCH_PARENT,
-				WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
-				WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-				PixelFormat .TRANSLUCENT
-		);
-		uiLayoutParams.alpha= (float) 0.5;
-
-		uiLayoutParams.gravity=Gravity.CENTER;
-		LayoutInflater inflater=LayoutInflater.from(this);
-
-		inflater.inflate(R.layout.ui_layout,uiFrameLayout);
-		myWindowManager.addView(uiFrameLayout,uiLayoutParams);
-
-
-
-		//***************************SETTING UP THE BUTTONS**********************//
-		//SWIPE LEFT BUTTON
-		swipeLeftButton=uiFrameLayout.findViewById(R.id.swipeLeftButton);
-		swipeLeftButton.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				Log.d("TAG2","SWIPE LEFT");
-				//********************swipe left code here***************
-				Path swipePath = new Path();
-				swipePath.moveTo(700, 500);
-				swipePath.lineTo(10, 500);
-				GestureDescription.Builder gestureBuilder = new GestureDescription.Builder();
-				gestureBuilder.addStroke(new GestureDescription.StrokeDescription(swipePath, 0, 100));
-				dispatchGesture(gestureBuilder.build(), null, null);
-				//************************removal code here********************
-
-				longTapReceived=false;
-				Log.d("TAG2","Long Tap Received ="+longTapReceived);
-				myWindowManager.removeView(uiFrameLayout);
-			}
-		});
-		//SWIPE RIGHT BUTTON
-		swipeRightButton=uiFrameLayout.findViewById(R.id.swipeRightButton);
-		swipeRightButton.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				Log.d("TAG2","SWIPE RIGHT");
-				//********************swipe right code here***************
-				Path swipePath = new Path();
-				swipePath.moveTo(10, 500);
-				swipePath.lineTo(700, 500);
-				GestureDescription.Builder gestureBuilder = new GestureDescription.Builder();
-				gestureBuilder.addStroke(new GestureDescription.StrokeDescription(swipePath, 0, 100));
-				dispatchGesture(gestureBuilder.build(), null, null);
-				//************************removal code here********************
-				longTapReceived=false;
-				Log.d("TAG2","Long Tap Received ="+longTapReceived);
-				myWindowManager.removeView(uiFrameLayout);
-			}
-		});
-		//cancel button
-		cancelButton=uiFrameLayout.findViewById(R.id.cancelButton);
-		cancelButton.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				myWindowManager.removeView(uiFrameLayout);
-				longTapReceived=false;
-			}
-		});
-
-
-
-
-
-		//************************SETTING UP THE FACEVIEWLAYOUT***************************************//
-
-		faceView= LayoutInflater.from(this).inflate(R.layout.face_view_layout,null);
-
-		faceParams= new WindowManager.LayoutParams(
-				WindowManager.LayoutParams.WRAP_CONTENT,
-				WindowManager.LayoutParams.WRAP_CONTENT,
-				WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
-				WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE| WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-						,
-				PixelFormat.TRANSLUCENT
-		);
-		faceParams.gravity= Gravity.TOP;
-		faceParams.x=0;
-		faceParams.y=0;
-		//faceParams.alpha= (float) ;
-		myWindowManager.addView(faceView,faceParams);
-
-		//**************************MAKING THE FACEVIEW SHOW FACE******************************//
-		cameraView=faceView.findViewById(R.id.faceView);
-		cameraView.setVisibility(SurfaceView.VISIBLE);
-		cameraView.setCvCameraViewListener(this);
-		cameraView.enableView();
-
-
-
-		//***************************SHOWING THE CURSOR ON THE SCREEN***************************//
-		cursorFrameLayout=new FrameLayout(this);
-		cursorParams=new WindowManager.LayoutParams(
-				WindowManager.LayoutParams.WRAP_CONTENT,
-				WindowManager.LayoutParams.WRAP_CONTENT,
-				WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
-				WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
-				| WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON,
-				PixelFormat .TRANSLUCENT
-		);
-		cursorParams.gravity=Gravity.TOP|Gravity.LEFT;
-		inflater=LayoutInflater.from(this);
-
-		inflater.inflate(R.layout.cursor_layout,cursorFrameLayout);
-		//use cursorFramlayout instead of cursor view
-		cursorImageView=cursorFrameLayout.findViewById(R.id.cursorImageView);
-		myWindowManager.addView(cursorFrameLayout,cursorParams);
+		//**************************SETTING UP THE LAYOUTS**************************************//
+		this.setUpTheLayoutsOtherThanSideLayouts();
 
 
 
@@ -246,24 +137,100 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 				plusCursorY=yDir*plusCursorY;
 
 
+
 				cursorParams.x+=plusCursorX;
 
-				if(cursorParams.x>deviceWidth)cursorParams.x=deviceWidth;
+				if(cursorParams.x>deviceWidth-50)cursorParams.x=deviceWidth-50;
 				else if(cursorParams.x<0)cursorParams.x=0;
 
 				cursorParams.y+=plusCursorY;
-				if(cursorParams.y>deviceHeight)cursorParams.y=deviceHeight;
+				if(cursorParams.y>deviceHeight-20)cursorParams.y=deviceHeight-20;
 				else if(cursorParams.y<0)cursorParams.y=0;
 
 				myWindowManager.updateViewLayout(cursorFrameLayout,cursorParams);
+
+
+
 				//************************CURSOR MOVEMENT CODE ENDS**********************//
 
 				//*******************Color change code starts**************************//
-				if(fate==NO_ACTION)cursorImageView.setBackgroundColor(Color.WHITE);
+				if(fate==NO_ACTION){cursorImageView.setBackgroundColor(Color.WHITE);
+					Log.d("TAGDrag","plusCursorx="+plusCursorX+",plusCursorY="+plusCursorY);
+					if(plusCursorX==0 && plusCursorY==0){
+
+						cursorImageView.setBackgroundColor(Color.GREEN);
+					}
+				}
 				else if(fate==TAP)cursorImageView.setBackgroundColor(Color.BLUE);
 				else if(fate==LONG_TAP)	cursorImageView.setBackgroundColor(Color.RED);
 
 				//*******************Color change code ends**************************//
+
+				//**************************TAPN RELATED CODES*********************//
+				if(fate==NO_ACTION){
+
+					firstTapReceivedByHandler=false;
+				}
+
+
+				if(fate==TAP){
+					if(firstTapReceivedByHandler ==false){
+						firstTapReceivedByHandler =true;
+
+						//cursor is on extreme right
+						if(cursorParams.x==deviceWidth-50){
+							staticDraggingGestures(SWAP_RIGHT);
+							score=0;
+							thereIsTapPotential=false;
+							timer=0;
+						}//cursor is onextreme left
+						else if(cursorParams.x==0){
+							staticDraggingGestures(SWAP_LEFT);
+							score=0;
+							thereIsTapPotential=false;
+							timer=0;
+
+						}else if(cursorParams.y==deviceHeight-20){
+							staticDraggingGestures(DRAG_DOWN);
+							score=0;
+							thereIsTapPotential=false;
+							timer=0;
+						}else if(cursorParams.y==0){
+							staticDraggingGestures(DRAG_UP);
+							score=0;
+							thereIsTapPotential=false;
+							timer=0;
+						}
+					}
+
+
+
+				}
+
+
+
+				//*********************LONG TAP RELATED CODES*************************
+
+				if(fate==LONG_TAP){
+					longTapReceivedByHandler=true;
+				}
+				if(longTapReceivedByHandler==true){
+
+					if(optionScreenSetUp==false){
+						optionScreenSetUp=true;
+						myWindowManager.removeView(cursorFrameLayout);
+						//myWindowManager.addView(drawingFrameLayout,drawingLayoutParams);
+						myWindowManager.addView(uiFrameLayout,uiLayoutParams);
+
+						myWindowManager.addView(cursorFrameLayout,cursorParams);
+
+					}else if(optionScreenSetUp==true){
+						Log.d("TAG3","option screen flag is set true");
+					}
+
+				}
+
+
 
 			}
 		};
@@ -271,6 +238,10 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 
 
 	}
+	//handler related more vars
+	boolean optionScreenSetUp=false;
+	boolean aSideLayoutIsPresent=false;
+	boolean firstTapReceivedByHandler =false;
 
 	//***************************VARIABLES RELATED TO CAMERA FRAMES******************************//
 
@@ -311,7 +282,9 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 	GestureDescription.Builder gestureDescriptionBuilder;
 	GestureDescription.StrokeDescription strokeDescription;
 
-
+	//****************************************related to two tap clicks****************************//
+	int dragClickCount=0;
+	boolean longTapModeOn=false;
 
 	@Override
 	public void onCameraViewStarted(int width, int height) {
@@ -474,10 +447,10 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 				timer= (int) (    timer+   Math.abs(prevframeTime-System.currentTimeMillis() )      ) ;
 				prevframeTime= (int) System.currentTimeMillis();
 				//Log.d("TAG1","Time = "+timer);
-				if(timer>3000){
+				if(timer>1500){
 					fate=TAP;
 				}
-				if(timer>8000){
+				if(timer>5000){
 					fate=LONG_TAP;
 				}
 			}
@@ -508,7 +481,7 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 		}
 		//**********************IF A TAP IS EXECUTED AS PER LOGIC***********************//
 		if(thereIsTapPotential==true && score==0){
-			Log.d("TAG3","A Tap is executed");
+			//Log.d("TAG3","A Tap is executed");
 
 			//****************TAP CODE**********************//
 			//make the tap
@@ -523,42 +496,7 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 		}
 		//***************************CODE FOR LONG TAP***********************************//
 		if(fate==LONG_TAP){
-			if(firstSignalForLongTapReceived==false){//i am receiving the first signal for long tap
-				Log.d("TAG3","I just received the first long tap signal");
-				firstSignalForLongTapReceived=true;
-				dragPath=new Path();
-				dragPath.moveTo(cursorParams.x+35,cursorParams.y+90);
-				gestureDescriptionBuilder=new GestureDescription.Builder();
-				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-					strokeDescription=new GestureDescription.StrokeDescription(dragPath,0,100,true);
-
-				}
-				gestureDescriptionBuilder.addStroke(strokeDescription);
-				gestureDescription=gestureDescriptionBuilder.build();
-				dispatchGesture(gestureDescription,null,null);
-				oldLongTapPoint=new Point(cursorParams.x+35,cursorParams.y+90);
-				//gestureDescription=new GestureDescription();
-
-			}else{//first signal received already
-				Log.d("TAG3","I am receiving other long tap  signals");
-				//Path dragPath=new Path();
-				int x= (int) oldLongTapPoint.x;
-				int y= (int) oldLongTapPoint.y;
-				//dragPath.moveTo(x,y);
-
-				dragPath.lineTo(cursorParams.x+35,cursorParams.y+90);
-				gestureDescriptionBuilder=new GestureDescription.Builder();
-				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-					strokeDescription=new GestureDescription.StrokeDescription(dragPath,0,1000,true);
-
-
-				}
-				gestureDescriptionBuilder.addStroke(strokeDescription);
-				gestureDescription=gestureDescriptionBuilder.build();
-				dispatchGesture(gestureDescription,null,null);
-				oldLongTapPoint=new Point(cursorParams.x+35,cursorParams.y+90);
-
-			}
+			//Log.d("TAG3","Long tap reached");
 
 		}
 
@@ -626,6 +564,255 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 		}
 	}
 
+	Button recentsButton;
+	Button notificationsButton;
+	Button screenShotButton;
+	Button volUpButton,volDownButton,longTapButton,customDragButton;
+	void setUpTheButtons(){
+		longTapButton=uiFrameLayout.findViewById(R.id.longPressButton);
+
+
+
+
+
+
+		//SWIPE LEFT BUTTON
+		homeButton =uiFrameLayout.findViewById(R.id.homeButton);
+		homeButton.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				Log.d("TAG2","home button pressed");
+				//********************swipe left code here***************
+				performGlobalAction(GLOBAL_ACTION_HOME);
+				//************************removal code here********************
+				longTapReceived=false;
+				Log.d("TAG2","Long Tap Received ="+longTapReceived);
+				myWindowManager.removeView(uiFrameLayout);
+				myWindowManager.removeView(drawingFrameLayout);
+				longTapReceivedByHandler=false;
+				optionScreenSetUp=false;
+			}
+		});
+		//SWIPE RIGHT BUTTON
+		backButton =uiFrameLayout.findViewById(R.id.backButton);
+		backButton.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				Log.d("TAG2","back Button Pressed");
+				//********************swipe right code here***************
+				performGlobalAction(GLOBAL_ACTION_BACK);
+				//************************removal code here********************
+				longTapReceived=false;
+				Log.d("TAG2","Long Tap Received ="+longTapReceived);
+				myWindowManager.removeView(uiFrameLayout);
+				myWindowManager.removeView(drawingFrameLayout);
+				longTapReceivedByHandler=false;
+				optionScreenSetUp=false;
+
+			}
+		});
+		recentsButton =uiFrameLayout.findViewById(R.id.recentAppsButton);
+		recentsButton.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				Log.d("TAG2","back Button Pressed");
+				//********************swipe right code here***************
+				performGlobalAction(GLOBAL_ACTION_RECENTS);
+				//************************removal code here********************
+				longTapReceived=false;
+				Log.d("TAG2","Long Tap Received ="+longTapReceived);
+				myWindowManager.removeView(uiFrameLayout);
+				myWindowManager.removeView(drawingFrameLayout);
+				longTapReceivedByHandler=false;
+				optionScreenSetUp=false;
+
+			}
+		});
+		screenShotButton =uiFrameLayout.findViewById(R.id.screenShotButton);
+		screenShotButton.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				Log.d("TAG2","back Button Pressed");
+				//********************swipe right code here***************
+				performGlobalAction(GLOBAL_ACTION_TAKE_SCREENSHOT);
+				//************************removal code here********************
+				longTapReceived=false;
+				Log.d("TAG2","Long Tap Received ="+longTapReceived);
+				myWindowManager.removeView(uiFrameLayout);
+				myWindowManager.removeView(drawingFrameLayout);
+				longTapReceivedByHandler=false;
+				optionScreenSetUp=false;
+
+			}
+		});
+		notificationsButton =uiFrameLayout.findViewById(R.id.notificationButton);
+		notificationsButton.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				Log.d("TAG2","back Button Pressed");
+				//********************swipe right code here***************
+				performGlobalAction(GLOBAL_ACTION_NOTIFICATIONS);
+				//************************removal code here********************
+				longTapReceived=false;
+				Log.d("TAG2","Long Tap Received ="+longTapReceived);
+				myWindowManager.removeView(uiFrameLayout);
+				myWindowManager.removeView(drawingFrameLayout);
+				longTapReceivedByHandler=false;
+				optionScreenSetUp=false;
+
+			}
+		});
+		
+
+		//cancel button
+		cancelButton=uiFrameLayout.findViewById(R.id.cancelButton);
+		cancelButton.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				myWindowManager.removeView(uiFrameLayout);
+				myWindowManager.removeView(drawingFrameLayout);
+				longTapReceived=false;
+				longTapReceivedByHandler=false;
+				optionScreenSetUp=false;
+
+			}
+		});
+
+
+
+
+
+
+	}
+
+	void setUpTheLayoutsOtherThanSideLayouts(){
+
+		//*******************************SETTING UP THE GUI ON THE SCREEN*************************//
+		uiFrameLayout=new FrameLayout(this);
+		uiLayoutParams=new WindowManager.LayoutParams(
+				WindowManager.LayoutParams.WRAP_CONTENT,
+				WindowManager.LayoutParams.WRAP_CONTENT,
+				WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+				WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+				PixelFormat .TRANSLUCENT
+		);
+		uiLayoutParams.alpha= (float) 1;
+
+		uiLayoutParams.gravity=Gravity.CENTER;
+		LayoutInflater inflater=LayoutInflater.from(this);
+
+		inflater.inflate(R.layout.ui_layout,uiFrameLayout);
+		//myWindowManager.addView(uiFrameLayout,uiLayoutParams);
+		//**************************************SETTING UP THE DRAWING IMAGEVIEW LAYOUT******************************//
+		drawingFrameLayout=new FrameLayout(this);
+		drawingLayoutParams=new WindowManager.LayoutParams(
+				WindowManager.LayoutParams.MATCH_PARENT,
+				WindowManager.LayoutParams.MATCH_PARENT,
+				WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+				WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE| WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+				PixelFormat .TRANSLUCENT
+		);
+
+		drawingLayoutParams.alpha= (float) 0.3;
+		drawingLayoutParams.gravity=Gravity.TOP|Gravity.LEFT;
+		inflater=LayoutInflater.from(this);
+
+		inflater.inflate(R.layout.drawing_image_view_layout,drawingFrameLayout);
+
+
+		//***************************SETTING UP THE BUTTONS**********************//
+		this.setUpTheButtons();
+		//************************SETTING UP THE FACEVIEWLAYOUT***************************************//
+
+		faceView= LayoutInflater.from(this).inflate(R.layout.face_view_layout,null);
+
+		faceParams= new WindowManager.LayoutParams(
+				WindowManager.LayoutParams.WRAP_CONTENT,
+				WindowManager.LayoutParams.WRAP_CONTENT,
+				WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+				WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE| WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+				,
+				PixelFormat.TRANSLUCENT
+		);
+		faceParams.gravity= Gravity.CENTER_HORIZONTAL;
+		faceParams.x=0;
+		faceParams.y=0;
+		faceParams.alpha= (float)0 ;
+		myWindowManager.addView(faceView,faceParams);
+
+		//**************************MAKING THE FACEVIEW SHOW FACE******************************//
+		cameraView=faceView.findViewById(R.id.faceView);
+		cameraView.setVisibility(SurfaceView.VISIBLE);
+		cameraView.setCvCameraViewListener(this);
+		cameraView.enableView();
+
+
+
+		//***************************SHOWING THE CURSOR ON THE SCREEN***************************//
+		cursorFrameLayout=new FrameLayout(this);
+		cursorParams=new WindowManager.LayoutParams(
+				WindowManager.LayoutParams.WRAP_CONTENT,
+				WindowManager.LayoutParams.WRAP_CONTENT,
+				WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+				WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+						| WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON,
+				PixelFormat .TRANSLUCENT
+		);
+		cursorParams.gravity=Gravity.TOP|Gravity.LEFT;
+		inflater=LayoutInflater.from(this);
+
+		inflater.inflate(R.layout.cursor_layout,cursorFrameLayout);
+		//use cursorFramlayout instead of cursor view
+		cursorImageView=cursorFrameLayout.findViewById(R.id.cursorImageView);
+		myWindowManager.addView(cursorFrameLayout,cursorParams);
+
+	}
+
+	//*******************************GESTURE CODES***********************************//
+	int SWAP_LEFT=100;
+	int SWAP_RIGHT=200;
+
+	int DRAG_UP=300;
+	int DRAG_DOWN=400;
+	void staticDraggingGestures(int gestureCode){
+		int fromX=0;
+		int fromY=0;
+		int toX=0;
+		int toY=0;
+		if(gestureCode==SWAP_LEFT){
+			fromX=deviceWidth-50;
+			fromY=deviceHeight/2;
+			toX=10;
+			toY=deviceHeight/2;
+			Log.d("TAGDrag","SWAP LEFT CALLED");
+
+		}else if(gestureCode==SWAP_RIGHT){
+			fromX=10;
+			fromY=deviceHeight/2;
+			toX=deviceWidth-50;
+			toY=deviceHeight/2;
+			Log.d("TAGDrag","SWAP RIGHT CALLED");
+
+		}else if(gestureCode==DRAG_UP){
+			fromX=deviceWidth/2;
+			fromY=deviceHeight/3;
+			toX=deviceWidth/2;
+			toY=deviceHeight/2;
+		}else if(gestureCode==DRAG_DOWN){
+			fromX=deviceWidth/2;
+			fromY=deviceHeight-30;
+			toX=deviceWidth/2;
+			toY=deviceHeight/2;
+		}
+		Path swipePath = new Path();
+		swipePath.moveTo(fromX, fromY);
+		swipePath.lineTo(toX, toY);
+		GestureDescription.Builder gestureBuilder = new GestureDescription.Builder();
+		gestureBuilder.addStroke(new GestureDescription.StrokeDescription(swipePath, 0, 1000));
+		dispatchGesture(gestureBuilder.build(), null, null);
+
+
+	}
 
 	@Override
 	public void onAccessibilityEvent(AccessibilityEvent event) {
@@ -638,3 +825,4 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 	}
 
 }
+//COMMIT NO:01
