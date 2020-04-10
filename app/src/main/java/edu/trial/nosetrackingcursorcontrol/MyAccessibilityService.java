@@ -114,13 +114,7 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 				int xDir=messageArray[2];
 				int yDir=messageArray[3];
 				int fate=messageArray[4];
-			/*	Log.d("TAG1","*********************************");
-				Log.d("TAG1","xDiff="+xDiff);
-				Log.d("TAG1","yDiff="+yDiff);
-				Log.d("TAG1","xDir="+xDir);
-				Log.d("TAG1","yDir="+yDir);
-				Log.d("TAG1","fate="+fate);
-				Log.d("TAG1","*********************************");*/
+
 
 				int plusCursorX=0;
 				int plusCursorY=0;
@@ -149,24 +143,31 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 
 				myWindowManager.updateViewLayout(cursorFrameLayout,cursorParams);
 
-
-
 				//************************CURSOR MOVEMENT CODE ENDS**********************//
 
-				//*******************Color change code starts**************************//
+				//*******************COLOR CHANGE CODE STARTS**************************//
 				if(fate==NO_ACTION){cursorImageView.setBackgroundColor(Color.WHITE);
 					Log.d("TAGDrag","plusCursorx="+plusCursorX+",plusCursorY="+plusCursorY);
 					if(plusCursorX==0 && plusCursorY==0){
-
 						cursorImageView.setBackgroundColor(Color.GREEN);
+					}
+					if(cursorParams.x==deviceWidth-50){
+						cursorImageView.setBackgroundColor(Color.MAGENTA);
+					}//cursor is onextreme left
+					else if(cursorParams.x==0){
+						cursorImageView.setBackgroundColor(Color.MAGENTA);
+					}else if(cursorParams.y==deviceHeight-20){
+						cursorImageView.setBackgroundColor(Color.MAGENTA);
+					}else if(cursorParams.y==0){
+						cursorImageView.setBackgroundColor(Color.MAGENTA);
 					}
 				}
 				else if(fate==TAP)cursorImageView.setBackgroundColor(Color.BLUE);
 				else if(fate==LONG_TAP)	cursorImageView.setBackgroundColor(Color.RED);
 
-				//*******************Color change code ends**************************//
+				//*******************COLOR CHANGE CODE ENDS**************************//
 
-				//**************************TAPN RELATED CODES*********************//
+				//**************************TAP RELATED CODES*********************//
 				if(fate==NO_ACTION){
 
 					firstTapReceivedByHandler=false;
@@ -174,35 +175,6 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 
 
 				if(fate==TAP){
-					if(firstTapReceivedByHandler ==false){
-						firstTapReceivedByHandler =true;
-
-						//cursor is on extreme right
-						if(cursorParams.x==deviceWidth-50){
-							staticDraggingGestures(SWAP_RIGHT);
-							score=0;
-							thereIsTapPotential=false;
-							timer=0;
-						}//cursor is onextreme left
-						else if(cursorParams.x==0){
-							staticDraggingGestures(SWAP_LEFT);
-							score=0;
-							thereIsTapPotential=false;
-							timer=0;
-
-						}else if(cursorParams.y==deviceHeight-20){
-							staticDraggingGestures(DRAG_DOWN);
-							score=0;
-							thereIsTapPotential=false;
-							timer=0;
-						}else if(cursorParams.y==0){
-							staticDraggingGestures(DRAG_UP);
-							score=0;
-							thereIsTapPotential=false;
-							timer=0;
-						}
-					}
-
 
 
 				}
@@ -221,14 +193,39 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 						myWindowManager.removeView(cursorFrameLayout);
 						//myWindowManager.addView(drawingFrameLayout,drawingLayoutParams);
 						myWindowManager.addView(uiFrameLayout,uiLayoutParams);
+						myWindowManager.addView(drawingFrameLayout,drawingLayoutParams);
 
 						myWindowManager.addView(cursorFrameLayout,cursorParams);
+						longTapSwitch=true;
+
+						closeButtonSignal=false;//LAST NIGHT,I ADDED IT
+
 
 					}else if(optionScreenSetUp==true){
 						Log.d("TAG3","option screen flag is set true");
+						if(closeButtonSignal==false){
+							Log.d("TAGX","Close button still hasnt given me signal");
+						}else if(closeButtonSignal==true){
+
+							optionScreenSetUp=false;
+							closeButtonSignal=false;
+							longTapReceivedByHandler=false;
+							Log.d("TAGX","optionScreenSetUp="+optionScreenSetUp);
+							Log.d("TAGX","closeButtonSignal="+closeButtonSignal);
+							Log.d("TAGX","longTapReceivedByHandler="+longTapReceivedByHandler);
+							myWindowManager.removeView(uiFrameLayout);
+							myWindowManager.removeView(drawingFrameLayout);
+
+						}
 					}
 
 				}
+
+
+
+
+				//***************************UI SCREEN DEALER MODULE***************************//
+
 
 
 
@@ -240,8 +237,9 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 	}
 	//handler related more vars
 	boolean optionScreenSetUp=false;
-	boolean aSideLayoutIsPresent=false;
+	boolean closeButtonSignal=false;
 	boolean firstTapReceivedByHandler =false;
+	boolean longTapSwitch=false;
 
 	//***************************VARIABLES RELATED TO CAMERA FRAMES******************************//
 
@@ -476,27 +474,63 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 			thereIsTapPotential=false;
 			Log.d("TAG1","I am gonna LONG TAP");
 
-
-
 		}
 		//**********************IF A TAP IS EXECUTED AS PER LOGIC***********************//
 		if(thereIsTapPotential==true && score==0){
 			//Log.d("TAG3","A Tap is executed");
 
 			//****************TAP CODE**********************//
-			//make the tap
-			Path swipePath = new Path();
-			swipePath.moveTo(cursorParams.x+35, cursorParams.y+90);
-			GestureDescription.Builder gestureBuilder = new GestureDescription.Builder();
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-				gestureBuilder.addStroke(new GestureDescription.StrokeDescription(swipePath, 0, 150));
+
+			//cursor is on extreme right
+			if(cursorParams.x==deviceWidth-50){
+				staticDraggingGestures(SWAP_LEFT);
+				score=0;
+				thereIsTapPotential=false;
+				timer=0;
+			}//cursor is onextreme left
+			else if(cursorParams.x==0){
+				staticDraggingGestures(SWAP_RIGHT);
+				score=0;
+				thereIsTapPotential=false;
+				timer=0;
+
+			}else if(cursorParams.y==deviceHeight-20){
+				staticDraggingGestures(DRAG_DOWN);
+				score=0;
+				thereIsTapPotential=false;
+				timer=0;
+			}else if(cursorParams.y==0){
+				staticDraggingGestures(DRAG_UP);
+				score=0;
+				thereIsTapPotential=false;
+				timer=0;
+			}else{
+				score=0;
+				timer=0;
+				Path swipePath = new Path();
+				swipePath.moveTo(cursorParams.x+35, cursorParams.y+90);
+				GestureDescription.Builder gestureBuilder = new GestureDescription.Builder();
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+					gestureBuilder.addStroke(new GestureDescription.StrokeDescription(swipePath, 0, 150));
+				}
+				dispatchGesture(gestureBuilder.build(), null, null);
+
+				thereIsTapPotential=false;
+
 			}
-			dispatchGesture(gestureBuilder.build(), null, null);
-			thereIsTapPotential=false;
+
+
+
+			//make the tap
+
+
+
 		}
 		//***************************CODE FOR LONG TAP***********************************//
 		if(fate==LONG_TAP){
 			//Log.d("TAG3","Long tap reached");
+
+				timer=0;
 
 		}
 
@@ -567,14 +601,13 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 	Button recentsButton;
 	Button notificationsButton;
 	Button screenShotButton;
+
 	Button volUpButton,volDownButton,longTapButton,customDragButton;
+
+
+
 	void setUpTheButtons(){
 		longTapButton=uiFrameLayout.findViewById(R.id.longPressButton);
-
-
-
-
-
 
 		//SWIPE LEFT BUTTON
 		homeButton =uiFrameLayout.findViewById(R.id.homeButton);
@@ -585,12 +618,12 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 				//********************swipe left code here***************
 				performGlobalAction(GLOBAL_ACTION_HOME);
 				//************************removal code here********************
-				longTapReceived=false;
-				Log.d("TAG2","Long Tap Received ="+longTapReceived);
-				myWindowManager.removeView(uiFrameLayout);
-				myWindowManager.removeView(drawingFrameLayout);
-				longTapReceivedByHandler=false;
-				optionScreenSetUp=false;
+				//longTapReceived=false;
+				//Log.d("TAG2","Long Tap Received ="+longTapReceived);
+				/*myWindowManager.removeView(uiFrameLayout);
+				myWindowManager.removeView(drawingFrameLayout);*/
+				//longTapReceivedByHandler=false;
+				//optionScreenSetUp=false;
 			}
 		});
 		//SWIPE RIGHT BUTTON
@@ -602,12 +635,12 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 				//********************swipe right code here***************
 				performGlobalAction(GLOBAL_ACTION_BACK);
 				//************************removal code here********************
-				longTapReceived=false;
-				Log.d("TAG2","Long Tap Received ="+longTapReceived);
-				myWindowManager.removeView(uiFrameLayout);
-				myWindowManager.removeView(drawingFrameLayout);
-				longTapReceivedByHandler=false;
-				optionScreenSetUp=false;
+				//ongTapReceived=false;
+				//Log.d("TAG2","Long Tap Received ="+longTapReceived);
+				/*myWindowManager.removeView(uiFrameLayout);
+				myWindowManager.removeView(drawingFrameLayout);*/
+				//longTapReceivedByHandler=false;
+				//optionScreenSetUp=false;
 
 			}
 		});
@@ -618,13 +651,14 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 				Log.d("TAG2","back Button Pressed");
 				//********************swipe right code here***************
 				performGlobalAction(GLOBAL_ACTION_RECENTS);
+
 				//************************removal code here********************
-				longTapReceived=false;
-				Log.d("TAG2","Long Tap Received ="+longTapReceived);
-				myWindowManager.removeView(uiFrameLayout);
-				myWindowManager.removeView(drawingFrameLayout);
-				longTapReceivedByHandler=false;
-				optionScreenSetUp=false;
+				//longTapReceived=false;
+				//Log.d("TAG2","Long Tap Received ="+longTapReceived);
+				/*myWindowManager.removeView(uiFrameLayout);
+				myWindowManager.removeView(drawingFrameLayout);*/
+				//longTapReceivedByHandler=false;
+				//optionScreenSetUp=false;
 
 			}
 		});
@@ -636,29 +670,35 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 				//********************swipe right code here***************
 				performGlobalAction(GLOBAL_ACTION_TAKE_SCREENSHOT);
 				//************************removal code here********************
-				longTapReceived=false;
-				Log.d("TAG2","Long Tap Received ="+longTapReceived);
-				myWindowManager.removeView(uiFrameLayout);
-				myWindowManager.removeView(drawingFrameLayout);
-				longTapReceivedByHandler=false;
-				optionScreenSetUp=false;
+				//longTapReceived=false;
+				//Log.d("TAG2","Long Tap Received ="+longTapReceived);
+				/*myWindowManager.removeView(uiFrameLayout);
+				myWindowManager.removeView(drawingFrameLayout);*/
+				//longTapReceivedByHandler=false;
+				//optionScreenSetUp=false;
 
 			}
 		});
 		notificationsButton =uiFrameLayout.findViewById(R.id.notificationButton);
 		notificationsButton.setOnClickListener(new View.OnClickListener() {
+
 			@Override
 			public void onClick(View v) {
 				Log.d("TAG2","back Button Pressed");
 				//********************swipe right code here***************
+
 				performGlobalAction(GLOBAL_ACTION_NOTIFICATIONS);
+
+				//notificationsButton.setEnabled(false);
 				//************************removal code here********************
-				longTapReceived=false;
-				Log.d("TAG2","Long Tap Received ="+longTapReceived);
-				myWindowManager.removeView(uiFrameLayout);
-				myWindowManager.removeView(drawingFrameLayout);
-				longTapReceivedByHandler=false;
-				optionScreenSetUp=false;
+				//longTapReceived=false;
+
+			//	Log.d("TAG2","Long Tap Received ="+longTapReceived);
+				/*myWindowManager.removeView(uiFrameLayout);
+				myWindowManager.removeView(drawingFrameLayout);*/
+				//longTapReceivedByHandler=false;
+				//optionScreenSetUp=false;
+
 
 			}
 		});
@@ -669,11 +709,8 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 		cancelButton.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				myWindowManager.removeView(uiFrameLayout);
-				myWindowManager.removeView(drawingFrameLayout);
-				longTapReceived=false;
-				longTapReceivedByHandler=false;
-				optionScreenSetUp=false;
+				closeButtonSignal=true;
+
 
 			}
 		});
@@ -737,7 +774,7 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 		faceParams.gravity= Gravity.CENTER_HORIZONTAL;
 		faceParams.x=0;
 		faceParams.y=0;
-		faceParams.alpha= (float)0 ;
+		faceParams.alpha= (float)0.19 ;
 		myWindowManager.addView(faceView,faceParams);
 
 		//**************************MAKING THE FACEVIEW SHOW FACE******************************//
@@ -827,3 +864,4 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 }
 //COMMIT NO:01
 //COMMIT NO:02
+//making some serious changes
