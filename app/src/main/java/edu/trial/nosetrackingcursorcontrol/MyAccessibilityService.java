@@ -6,6 +6,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Path;
 import android.graphics.PixelFormat;
+import android.media.AudioManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -81,6 +82,7 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 
 	@Override
 	protected void onServiceConnected() {
+
 		super.onServiceConnected();
 		//*******************LOAFING THE OPENCV MODULES************************//
 		if(OpenCVLoader.initDebug()){
@@ -148,22 +150,93 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 				//*******************COLOR CHANGE CODE STARTS**************************//
 				if(fate==NO_ACTION){cursorImageView.setBackgroundColor(Color.WHITE);
 					Log.d("TAGDrag","plusCursorx="+plusCursorX+",plusCursorY="+plusCursorY);
-					if(plusCursorX==0 && plusCursorY==0){
-						cursorImageView.setBackgroundColor(Color.GREEN);
+					if(normalTappingSwitch==true){
+
+						if(cursorParams.x==deviceWidth-50 && cursorParams.y==deviceHeight-20){
+							cursorImageView.setBackgroundColor(Color.LTGRAY);
+							cursorImageView.setImageResource(R.drawable.back);
+
+							//asdasdasd
+						}
+						else if(cursorParams.x==0 && cursorParams.y==deviceHeight-20){
+							cursorImageView.setBackgroundColor(Color.LTGRAY);
+							cursorImageView.setImageResource(R.drawable.recents);
+
+							//asdasdasd
+						}
+						else if((cursorParams.x>=deviceWidth*1/4 && cursorParams.x<=deviceWidth*2/4) &&
+								(cursorParams.y==deviceHeight-20)){//home position
+							cursorImageView.setBackgroundColor(Color.LTGRAY);
+							cursorImageView.setImageResource(R.drawable.home);
+
+							//asdasdasd
+						}
+						else if((cursorParams.x>=deviceWidth*1/4 && cursorParams.x<=deviceWidth*2/4) &&
+								(cursorParams.y==0)){//home position
+							cursorImageView.setBackgroundColor(Color.LTGRAY);
+							cursorImageView.setImageResource(R.drawable.ic_notifications_black_24dp);
+
+							//asdasdasd
+						}
+						else if((cursorParams.y>0 && cursorParams.y<=deviceWidth*1/6) && cursorParams.x==deviceWidth-50){
+							cursorImageView.setBackgroundColor(Color.LTGRAY);
+							cursorImageView.setImageResource(R.drawable.ic_volume_up_black_24dp);
+
+						}
+						else if((cursorParams.y>deviceWidth*1/6 && cursorParams.y<=deviceWidth*2/6) && cursorParams.x==deviceWidth-50){
+							cursorImageView.setBackgroundColor(Color.LTGRAY);
+							cursorImageView.setImageResource(R.drawable.ic_volume_off_black_24dp);
+
+						}
+						else if(cursorParams.x==deviceWidth-50){
+							cursorImageView.setBackgroundColor(Color.MAGENTA);
+							cursorImageView.setImageResource(R.drawable.swipe_right);
+
+						}//cursor is onextreme left
+						else if(cursorParams.x==0){
+							cursorImageView.setBackgroundColor(Color.MAGENTA);
+							cursorImageView.setImageResource(R.drawable.swipe_left);
+						}else if(cursorParams.y==deviceHeight-20){
+							cursorImageView.setBackgroundColor(Color.MAGENTA);
+							cursorImageView.setImageResource(R.drawable.drag_down);
+						}else if(cursorParams.y==0){
+							cursorImageView.setBackgroundColor(Color.MAGENTA);
+							cursorImageView.setImageResource(R.drawable.drag_up);
+
+						}else{//for all other positions
+
+							//cursorImageView.setBackgroundColor(Color.GREEN);
+							cursorImageView.setImageResource(R.drawable.ic_gps_fixed_black_24dp);
+						}
+						if(plusCursorX==0 && plusCursorY==0){
+							cursorImageView.setBackgroundColor(Color.WHITE);
+							//cursorImageView.setImageResource(R.drawable.ic_gps_fixed_black_24dp);
+						}else {
+							cursorImageView.setBackgroundColor(Color.YELLOW);
+						}
+
+					}else if(longPressingSwitch==true){
+						cursorImageView.setBackgroundColor(Color.YELLOW);
+						cursorImageView.setImageResource(R.drawable.ic_gps_fixed_black_24dp);
+
+					}else if(doubleTappingSwitch==true){
+						cursorImageView.setBackgroundColor(Color.YELLOW);
+						cursorImageView.setImageResource(R.drawable.ic_gps_fixed_black_24dp);
+					}else if(customDraggingSwitch==true){
+						cursorImageView.setBackgroundColor(Color.YELLOW);
+						cursorImageView.setImageResource(R.drawable.ic_gps_fixed_black_24dp);
 					}
-					if(cursorParams.x==deviceWidth-50){
-						cursorImageView.setBackgroundColor(Color.MAGENTA);
-					}//cursor is onextreme left
-					else if(cursorParams.x==0){
-						cursorImageView.setBackgroundColor(Color.MAGENTA);
-					}else if(cursorParams.y==deviceHeight-20){
-						cursorImageView.setBackgroundColor(Color.MAGENTA);
-					}else if(cursorParams.y==0){
-						cursorImageView.setBackgroundColor(Color.MAGENTA);
-					}
+
+
 				}
-				else if(fate==TAP)cursorImageView.setBackgroundColor(Color.BLUE);
-				else if(fate==LONG_TAP)	cursorImageView.setBackgroundColor(Color.RED);
+				else if(fate==TAP){
+					cursorImageView.setBackgroundColor(Color.RED);
+
+				}
+				else if(fate==LONG_TAP){
+					cursorImageView.setBackgroundColor(Color.BLUE);
+					cursorImageView.setImageResource(R.drawable.ic_gps_fixed_black_24dp);
+				}
 
 				//*******************COLOR CHANGE CODE ENDS**************************//
 
@@ -204,15 +277,15 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 					}else if(optionScreenSetUp==true){
 						Log.d("TAG3","option screen flag is set true");
 						if(closeButtonSignal==false){
-							Log.d("TAGX","Close button still hasnt given me signal");
+							/*Log.d("TAGX","Close button still hasnt given me signal");*/
 						}else if(closeButtonSignal==true){
 
 							optionScreenSetUp=false;
 							closeButtonSignal=false;
 							longTapReceivedByHandler=false;
-							Log.d("TAGX","optionScreenSetUp="+optionScreenSetUp);
+							/*Log.d("TAGX","optionScreenSetUp="+optionScreenSetUp);
 							Log.d("TAGX","closeButtonSignal="+closeButtonSignal);
-							Log.d("TAGX","longTapReceivedByHandler="+longTapReceivedByHandler);
+							Log.d("TAGX","longTapReceivedByHandler="+longTapReceivedByHandler);*/
 							myWindowManager.removeView(uiFrameLayout);
 							myWindowManager.removeView(drawingFrameLayout);
 
@@ -283,6 +356,17 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 	//****************************************related to two tap clicks****************************//
 	int dragClickCount=0;
 	boolean longTapModeOn=false;
+
+
+	//**********************************THE SWITCHES*************************************//
+	boolean normalTappingSwitch=true;
+	boolean doubleTappingSwitch=false;
+	boolean longPressingSwitch=false;
+	boolean customDraggingSwitch=false;
+	int customDragCounter=0;
+	int dragFromX,dragFromY,dragToX,dragToY;
+
+
 
 	@Override
 	public void onCameraViewStarted(int width, int height) {
@@ -472,55 +556,211 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 		}else if(fate==LONG_TAP){
 			//cursorImageView.setBackgroundColor(Color.RED);
 			thereIsTapPotential=false;
+			timer=0;
+			score=1;
 			Log.d("TAG1","I am gonna LONG TAP");
 
 		}
+
+
+
 		//**********************IF A TAP IS EXECUTED AS PER LOGIC***********************//
+
+
+		Log.d("TAGX","There is tapping potential="+thereIsTapPotential);
+		Log.d("TAGX","score="+score);
+		Log.d("TAGX","Normal Tapping Switch="+normalTappingSwitch);
 		if(thereIsTapPotential==true && score==0){
 			//Log.d("TAG3","A Tap is executed");
 
 			//****************TAP CODE**********************//
 
 			//cursor is on extreme right
-			if(cursorParams.x==deviceWidth-50){
-				staticDraggingGestures(SWAP_LEFT);
-				score=0;
-				thereIsTapPotential=false;
-				timer=0;
-			}//cursor is onextreme left
-			else if(cursorParams.x==0){
-				staticDraggingGestures(SWAP_RIGHT);
-				score=0;
-				thereIsTapPotential=false;
-				timer=0;
+			if(normalTappingSwitch==true){
+				if(cursorParams.x==deviceWidth-50 && cursorParams.y==deviceHeight-20){//cursor is at extreme right and bottom
+					performGlobalAction(GLOBAL_ACTION_BACK);
+					score=0;
+					thereIsTapPotential=false;
+					timer=0;
 
-			}else if(cursorParams.y==deviceHeight-20){
-				staticDraggingGestures(DRAG_DOWN);
-				score=0;
-				thereIsTapPotential=false;
-				timer=0;
-			}else if(cursorParams.y==0){
-				staticDraggingGestures(DRAG_UP);
-				score=0;
-				thereIsTapPotential=false;
-				timer=0;
-			}else{
+
+				}
+				else if(cursorParams.x==0 && cursorParams.y==deviceHeight-20){//cursor is at extreme left and bottom
+					performGlobalAction(GLOBAL_ACTION_RECENTS);
+					score=0;
+					thereIsTapPotential=false;
+					timer=0;
+
+
+				}
+				else if(cursorParams.x>=deviceWidth*1/4 && cursorParams.x<=deviceWidth*2/4 && (cursorParams.y==deviceHeight-20)){//cursor is at home position
+					performGlobalAction(GLOBAL_ACTION_HOME);
+					score=0;
+					thereIsTapPotential=false;
+					timer=0;
+
+
+				}
+				else if((cursorParams.x>=deviceWidth*1/4 && cursorParams.x<=deviceWidth*2/4) &&//cursor at notific position
+						(cursorParams.y==0)){//home position
+					performGlobalAction(GLOBAL_ACTION_NOTIFICATIONS);
+					score=0;
+					thereIsTapPotential=false;
+					timer=0;
+
+					//asdasdasd
+				}
+				else if((cursorParams.y>0 && cursorParams.y<=deviceWidth*1/6) && cursorParams.x==deviceWidth-50){//cursor at vol+
+					AudioManager audioManager = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
+					for(int i=1;i<=10;i++){
+						audioManager.adjustVolume(AudioManager.ADJUST_RAISE,AudioManager.FLAG_PLAY_SOUND|AudioManager.FLAG_SHOW_UI);
+					}
+					score=0;
+					thereIsTapPotential=false;
+					timer=0;
+
+				}
+				else if((cursorParams.y>deviceWidth*1/6 && cursorParams.y<=deviceWidth*2/6) && cursorParams.x==deviceWidth-50){//cursor at vol-
+					AudioManager audioManager = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
+					for(int i=1;i<=10;i++){
+						audioManager.adjustVolume(AudioManager.ADJUST_LOWER,AudioManager.FLAG_PLAY_SOUND|AudioManager.FLAG_SHOW_UI);
+					}
+					score=0;
+					thereIsTapPotential=false;
+					timer=0;
+
+				}
+				else if(cursorParams.x==deviceWidth-50){
+					staticDraggingGestures(SWAP_LEFT);
+					score=0;
+					thereIsTapPotential=false;
+					timer=0;
+				}//cursor is onextreme left
+				else if(cursorParams.x==0){
+					staticDraggingGestures(SWAP_RIGHT);
+					score=0;
+					thereIsTapPotential=false;
+					timer=0;
+
+				}else if(cursorParams.y==deviceHeight-20){
+					staticDraggingGestures(DRAG_DOWN);
+					score=0;
+					thereIsTapPotential=false;
+					timer=0;
+				}else if(cursorParams.y==0){
+					staticDraggingGestures(DRAG_UP);
+					score=0;
+					thereIsTapPotential=false;
+					timer=0;
+				}else{
+					score=0;
+					timer=0;
+					Path swipePath = new Path();
+					swipePath.moveTo(cursorParams.x+35, cursorParams.y+90);
+					GestureDescription.Builder gestureBuilder = new GestureDescription.Builder();
+					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+						gestureBuilder.addStroke(new GestureDescription.StrokeDescription(swipePath, 0, 150));
+					}
+					dispatchGesture(gestureBuilder.build(), null, null);
+
+					thereIsTapPotential=false;
+
+				}
+
+			}
+
+			else if(doubleTappingSwitch==true){
 				score=0;
 				timer=0;
 				Path swipePath = new Path();
 				swipePath.moveTo(cursorParams.x+35, cursorParams.y+90);
 				GestureDescription.Builder gestureBuilder = new GestureDescription.Builder();
 				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-					gestureBuilder.addStroke(new GestureDescription.StrokeDescription(swipePath, 0, 150));
+					gestureBuilder.addStroke(new GestureDescription.StrokeDescription(swipePath, 0, 10));
+					gestureBuilder.addStroke(new GestureDescription.StrokeDescription(swipePath, 100, 150));
+					Log.d("TAGY","I executed a double tap");
 				}
 				dispatchGesture(gestureBuilder.build(), null, null);
 
 				thereIsTapPotential=false;
 
+				longPressingSwitch=false;
+				doubleTappingSwitch=false;
+				normalTappingSwitch=true;
+				customDraggingSwitch=false;
+
 			}
+			else if(longPressingSwitch==true){
+				score=0;
+				timer=0;
+				Path swipePath = new Path();
+				swipePath.moveTo(cursorParams.x+35, cursorParams.y+90);
+				GestureDescription.Builder gestureBuilder = new GestureDescription.Builder();
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+					gestureBuilder.addStroke(new GestureDescription.StrokeDescription(swipePath, 0, 650));
+				}
+				dispatchGesture(gestureBuilder.build(), null, null);
+
+				thereIsTapPotential=false;
+
+				longPressingSwitch=false;
+				doubleTappingSwitch=false;
+				normalTappingSwitch=true;
+				customDraggingSwitch=false;
+			}
+			else if(customDraggingSwitch==true){
+				timer=0;
+				score=0;
+				thereIsTapPotential=false;
+
+				if(customDragCounter==0){
+					customDragCounter+=1;
+					dragFromX=cursorParams.x+35;
+					dragFromY=cursorParams.y+90;
+					Log.d("TAGY","From("+dragFromX+","+dragFromY+")");
+					Log.d("TAGY","I am coming here :counter="+customDragCounter);
+
+				}
+				else if(customDragCounter==1){
+					dragToX=cursorParams.x+35;
+					dragToY=cursorParams.y+90;
+					//**********************DRAG CODE*********************//
+					Path swipePath = new Path();
+					swipePath.moveTo(dragFromX, dragFromY);
+
+					Path swipePath2 = new Path();
+					swipePath2.moveTo(dragFromX, dragFromY);
+					swipePath2.lineTo(dragToX, dragToY);
+					GestureDescription.Builder gestureBuilder = new GestureDescription.Builder();
 
 
+					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+						GestureDescription.StrokeDescription strokeDescription=new GestureDescription.StrokeDescription(swipePath, 0, 1000,false);
+						gestureBuilder.addStroke(strokeDescription);
+						//gestureBuilder.addStroke(strokeDescription.continueStroke(swipePath2,5,1000,false));
+						gestureBuilder.addStroke(new GestureDescription.StrokeDescription(swipePath2,1000,1000,false));
 
+
+					}
+
+					/*gestureBuilder.addStroke(strokeDescription);
+					gestureBuilder.addStroke(new GestureDescription.StrokeDescription(swipePath2, 0, 1000));*/
+
+
+					dispatchGesture(gestureBuilder.build(), null, null);
+					//********************DRAG CODE**************************//
+
+					Log.d("TAGY","From("+dragToX+","+dragToY+")");
+					Log.d("TAGY","I just executed a custome drag");
+					customDragCounter=0;
+					longPressingSwitch=false;
+					doubleTappingSwitch=false;
+					normalTappingSwitch=true;
+					customDraggingSwitch=false;
+
+				}
+
+			}
 			//make the tap
 
 
@@ -602,12 +842,83 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 	Button notificationsButton;
 	Button screenShotButton;
 
-	Button volUpButton,volDownButton,longTapButton,customDragButton;
+	Button volUpButton,volDownButton,longTapButton,customDragButton,doubleTapButton;
 
 
 
 	void setUpTheButtons(){
+		volUpButton=uiFrameLayout.findViewById(R.id.volumeUpButton);
+		volUpButton.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				AudioManager audioManager = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
+				audioManager.adjustVolume(AudioManager.ADJUST_RAISE,AudioManager.FLAG_PLAY_SOUND|AudioManager.FLAG_SHOW_UI);
+				audioManager.adjustVolume(AudioManager.ADJUST_RAISE,AudioManager.FLAG_PLAY_SOUND|AudioManager.FLAG_SHOW_UI);
+				audioManager.adjustVolume(AudioManager.ADJUST_RAISE,AudioManager.FLAG_PLAY_SOUND|AudioManager.FLAG_SHOW_UI);
+				audioManager.adjustVolume(AudioManager.ADJUST_RAISE,AudioManager.FLAG_PLAY_SOUND|AudioManager.FLAG_SHOW_UI);
+				audioManager.adjustVolume(AudioManager.ADJUST_RAISE,AudioManager.FLAG_PLAY_SOUND|AudioManager.FLAG_SHOW_UI);
+			}
+		});
+		volDownButton=uiFrameLayout.findViewById(R.id.volumeDownButton);
+		volDownButton.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				AudioManager audioManager = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
+				audioManager.adjustVolume(AudioManager.ADJUST_LOWER,AudioManager.FLAG_PLAY_SOUND|AudioManager.FLAG_SHOW_UI);
+				audioManager.adjustVolume(AudioManager.ADJUST_LOWER,AudioManager.FLAG_PLAY_SOUND|AudioManager.FLAG_SHOW_UI);
+				audioManager.adjustVolume(AudioManager.ADJUST_LOWER,AudioManager.FLAG_PLAY_SOUND|AudioManager.FLAG_SHOW_UI);
+				audioManager.adjustVolume(AudioManager.ADJUST_LOWER,AudioManager.FLAG_PLAY_SOUND|AudioManager.FLAG_SHOW_UI);
+				audioManager.adjustVolume(AudioManager.ADJUST_LOWER,AudioManager.FLAG_PLAY_SOUND|AudioManager.FLAG_SHOW_UI);
+			}
+		});
+
+
+	/*	customDragButton=uiFrameLayout.findViewById(R.id.customDragButton);
+		customDragButton.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				customDraggingSwitch=true;
+
+				doubleTappingSwitch=false;
+				normalTappingSwitch=false;
+				longPressingSwitch=false;
+
+
+				closeButtonSignal=true;
+				Log.d("TAGY","*********************I CHANGED TO CUSTOM TAP MODE"+customDraggingSwitch+"*********************");
+			}
+		});*/
+		doubleTapButton=uiFrameLayout.findViewById(R.id.doubleTapButton);
+		doubleTapButton.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				doubleTappingSwitch=true;
+
+				normalTappingSwitch=false;
+				longPressingSwitch=false;
+				customDraggingSwitch=false;
+
+				closeButtonSignal=true;
+
+				Log.d("TAGX","*********************I CHANGED TO DOUBLE TAP MODE"+doubleTappingSwitch+"*********************");
+			}
+		});
+
+
 		longTapButton=uiFrameLayout.findViewById(R.id.longPressButton);
+		longTapButton.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				longPressingSwitch=true;
+
+				normalTappingSwitch=false;
+				doubleTappingSwitch=false;
+				customDraggingSwitch=false;
+
+				closeButtonSignal=true;
+
+			}
+		});
 
 		//SWIPE LEFT BUTTON
 		homeButton =uiFrameLayout.findViewById(R.id.homeButton);
@@ -650,6 +961,9 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 			public void onClick(View v) {
 				Log.d("TAG2","back Button Pressed");
 				//********************swipe right code here***************
+
+
+
 				performGlobalAction(GLOBAL_ACTION_RECENTS);
 
 				//************************removal code here********************
@@ -668,6 +982,8 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 			public void onClick(View v) {
 				Log.d("TAG2","back Button Pressed");
 				//********************swipe right code here***************
+				closeButtonSignal=true;
+
 				performGlobalAction(GLOBAL_ACTION_TAKE_SCREENSHOT);
 				//************************removal code here********************
 				//longTapReceived=false;
