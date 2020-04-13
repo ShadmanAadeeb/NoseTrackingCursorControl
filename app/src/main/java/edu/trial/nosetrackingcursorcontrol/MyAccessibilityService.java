@@ -188,7 +188,13 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 							cursorImageView.setBackgroundColor(Color.LTGRAY);
 							cursorImageView.setImageResource(R.drawable.ic_volume_off_black_24dp);
 
+
 						}
+						else if((cursorParams.y>deviceWidth*2/6 && cursorParams.y<=deviceWidth*3/6) && cursorParams.x==deviceWidth-50){
+							cursorImageView.setBackgroundColor(Color.LTGRAY);
+							cursorImageView.setImageResource(R.drawable.custom_drag);
+						}
+
 						else if((cursorParams.y>0 && cursorParams.y<=deviceWidth*1/6) && cursorParams.x==0){//cursor at double tap
 							cursorImageView.setBackgroundColor(Color.LTGRAY);
 							cursorImageView.setImageResource(R.drawable.ic_exposure_plus_2_black_24dp);
@@ -202,7 +208,7 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 
 						else if((cursorParams.y>deviceWidth*2/6 && cursorParams.y<=deviceWidth*3/6) && cursorParams.x==0){//cursor at drag
 							cursorImageView.setBackgroundColor(Color.LTGRAY);
-							cursorImageView.setImageResource(R.drawable.custom_drag);
+							cursorImageView.setImageResource(R.drawable.ic_center_focus_strong_black_24dp);
 
 						}
 
@@ -383,6 +389,9 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 	boolean customDraggingSwitch=false;
 	int customDragCounter=0;
 	int dragFromX,dragFromY,dragToX,dragToY;
+
+	int whichCustomDrag=0;
+
 
 
 
@@ -697,7 +706,21 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 					normalTappingSwitch=false;
 					doubleTappingSwitch=false;
 					customDraggingSwitch=true;
+					whichCustomDrag=1;
+					timer=0;
+					score=0;
+					thereIsTapPotential=false;
+					timer=0;
 
+				}
+
+				else if((cursorParams.y>deviceWidth*2/6 && cursorParams.y<=deviceWidth*3/6) && cursorParams.x==deviceWidth-50){//cursor at sharp drag
+					longPressingSwitch=false;
+
+					normalTappingSwitch=false;
+					doubleTappingSwitch=false;
+					customDraggingSwitch=true;
+					whichCustomDrag=2;
 					timer=0;
 					score=0;
 					thereIsTapPotential=false;
@@ -800,46 +823,58 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 				else if(customDragCounter==1){
 					dragToX=cursorParams.x+35;
 					dragToY=cursorParams.y+90;
-					//**********************DRAG CODE*********************//
-					Path swipePath = new Path();
-					swipePath.moveTo(dragFromX, dragFromY);
+					if(whichCustomDrag==1){
+						//**********************DRAG CODE*********************//
+						Path swipePath = new Path();
+						swipePath.moveTo(dragFromX, dragFromY);
 
-					Path swipePath2 = new Path();
-					swipePath2.moveTo(dragFromX, dragFromY);
-					swipePath2.lineTo(dragToX, dragToY);
-					GestureDescription.Builder gestureBuilder = new GestureDescription.Builder();
-
-
-					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-						GestureDescription.StrokeDescription strokeDescription=new GestureDescription.StrokeDescription(swipePath, 0, 1000,true);
-						final GestureDescription.StrokeDescription strokeDescription2=strokeDescription.continueStroke(swipePath2,2000,1000,false);
-						//strokeDescription.continueStroke(swipePath2,2000,1000,false);
-						gestureBuilder.addStroke(strokeDescription);
-						dispatchGesture(gestureBuilder.build(),
-
-								new GestureResultCallback() {
-							@Override
-							public void onCompleted(GestureDescription gestureDescription) {
-								super.onCompleted(gestureDescription);
-								dispatchGesture(new GestureDescription.Builder().addStroke(strokeDescription2).build(), null, null);
-
-							}
-						},
-
-								null);
-
-						//gestureBuilder.addStroke(strokeDescription.continueStroke(swipePath2,1001,1000,true));
-						//gestureBuilder.addStroke(new GestureDescription.StrokeDescription(swipePath2,1001,2000,false));
+						Path swipePath2 = new Path();
+						swipePath2.moveTo(dragFromX, dragFromY);
+						swipePath2.lineTo(dragToX, dragToY);
+						GestureDescription.Builder gestureBuilder = new GestureDescription.Builder();
 
 
-					}
+						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+							GestureDescription.StrokeDescription strokeDescription=new GestureDescription.StrokeDescription(swipePath, 0, 1000,true);
+							final GestureDescription.StrokeDescription strokeDescription2=strokeDescription.continueStroke(swipePath2,2000,1000,false);
+							//strokeDescription.continueStroke(swipePath2,2000,1000,false);
+							gestureBuilder.addStroke(strokeDescription);
+							dispatchGesture(gestureBuilder.build(),
+
+									new GestureResultCallback() {
+										@Override
+										public void onCompleted(GestureDescription gestureDescription) {
+											super.onCompleted(gestureDescription);
+											dispatchGesture(new GestureDescription.Builder().addStroke(strokeDescription2).build(), null, null);
+
+										}
+									},
+
+									null);
+
+							//gestureBuilder.addStroke(strokeDescription.continueStroke(swipePath2,1001,1000,true));
+							//gestureBuilder.addStroke(new GestureDescription.StrokeDescription(swipePath2,1001,2000,false));
+
+
+						}
 
 					/*gestureBuilder.addStroke(strokeDescription);
 					gestureBuilder.addStroke(new GestureDescription.StrokeDescription(swipePath2, 0, 1000));*/
 
 
-					dispatchGesture(gestureBuilder.build(), null, null);
-					//********************DRAG CODE**************************//
+						dispatchGesture(gestureBuilder.build(), null, null);
+						//********************DRAG CODE**************************//
+					}else if(whichCustomDrag==2){
+						Path swipePath2 = new Path();
+						swipePath2.moveTo(dragFromX, dragFromY);
+						swipePath2.lineTo(dragToX, dragToY);
+						GestureDescription.Builder gestureBuilder = new GestureDescription.Builder();
+						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+							gestureBuilder.addStroke(new GestureDescription.StrokeDescription(swipePath2,0,1000,false));
+						}
+						dispatchGesture(gestureBuilder.build(),null,null);
+
+					}
 
 					Log.d("TAGY","From("+dragToX+","+dragToY+")");
 					Log.d("TAGY","I just executed a custome drag");
