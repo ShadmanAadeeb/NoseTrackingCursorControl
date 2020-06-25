@@ -12,6 +12,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.os.PowerManager;
+import android.support.annotation.RequiresApi;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Gravity;
@@ -46,6 +48,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+@RequiresApi(api = Build.VERSION_CODES.DONUT)
 public class MyAccessibilityService extends AccessibilityService implements CameraBridgeViewBase.CvCameraViewListener2  {
 
 
@@ -96,6 +99,12 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 		deviceHeight = displayMetrics.heightPixels;
 		deviceWidth = displayMetrics.widthPixels;
 
+		//************************TAKING CONTROL OF THE LOCK****************************//
+		/*PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+		PowerManager.WakeLock wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
+				"MyApp::MyWakelockTag");
+		wakeLock.acquire();*/
+
 
 		//**************************SETTING UP THE LAYOUTS**************************************//
 		this.setUpTheLayoutsOtherThanSideLayouts();
@@ -122,13 +131,13 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 				int plusCursorX=0;
 				int plusCursorY=0;
 
-				if(xDiff>40) plusCursorX=5;
-				if(xDiff>60) plusCursorX=20;
-				if(xDiff>90) plusCursorX=40;
+				if(xDiff>80) plusCursorX=5;
+				if(xDiff>120) plusCursorX=20;
+				if(xDiff>150) plusCursorX=40;
 
-				if(yDiff>30) plusCursorY=5;
-				if(yDiff>50) plusCursorY=20;
-				if(yDiff>80) plusCursorY=40;
+				if(yDiff>60) plusCursorY=5;
+				if(yDiff>80) plusCursorY=20;
+				if(yDiff>120) plusCursorY=40;
 
 				plusCursorX=xDir*plusCursorX;
 				plusCursorY=yDir*plusCursorY;
@@ -455,14 +464,14 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 		matrixCentrePoint=new Point(mRgba.cols()/2,mRgba.rows()/2);
 
 		//*******************DRAWING THE THREE SQUARES FOR HELP************************//
-		Rect firstRectangle=new Rect(new Point(matrixCentrePoint.x-90,matrixCentrePoint.y-80),
-				new Point(matrixCentrePoint.x+90,matrixCentrePoint.y+80));
+		Rect firstRectangle=new Rect(new Point(matrixCentrePoint.x-150,matrixCentrePoint.y-120),
+				new Point(matrixCentrePoint.x+150,matrixCentrePoint.y+120));
 		Imgproc.rectangle(mRgba,firstRectangle.tl(),firstRectangle.br(),new Scalar(0,0,0),3);
-		Rect secondRectangle=new Rect(new Point(matrixCentrePoint.x-40,matrixCentrePoint.y-30),
-				new Point(matrixCentrePoint.x+40,matrixCentrePoint.y+30));
+		Rect secondRectangle=new Rect(new Point(matrixCentrePoint.x-80,matrixCentrePoint.y-60),
+				new Point(matrixCentrePoint.x+80,matrixCentrePoint.y+60));
 		Imgproc.rectangle(mRgba,secondRectangle.tl(),secondRectangle.br(),new Scalar(0,0,0),3);
-		Rect thirdRectangle=new Rect(new Point(matrixCentrePoint.x-60,matrixCentrePoint.y-50),
-				new Point(matrixCentrePoint.x+60,matrixCentrePoint.y+50));
+		Rect thirdRectangle=new Rect(new Point(matrixCentrePoint.x-120,matrixCentrePoint.y-80),
+				new Point(matrixCentrePoint.x+120,matrixCentrePoint.y+80));
 		Imgproc.rectangle(mRgba,thirdRectangle.tl(),thirdRectangle.br(),new Scalar(0,0,0),3);
 
 		//*************************************THIS IS THE DETECTOR AND TRACKER MODULE******************************//
@@ -474,7 +483,7 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 			MatOfRect faces=new MatOfRect();
 			//classifier detectsa face and stores the faces detected in faces object
 			haarCascadeClassifierForFace.detectMultiScale(mGray, faces, 1.1, 2,
-					2, new Size(100,100), new Size());
+					2, new Size(200,200), new Size());
 			//this array stores all the faces
 			Rect[]facesArray = faces.toArray();
 			if(facesArray.length>0) {
@@ -527,7 +536,7 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 
 		MatOfRect teeth=new MatOfRect();
 		haarCascadeClassifierForTeeth.detectMultiScale(mGray, teeth, 1.1, 3,
-				2, new Size(0.01,0.01), new Size(20,20));
+				2, new Size(1,1), new Size(20,20));
 		Rect[]teethArray = teeth.toArray();
 		if(teeth.toArray().length>0){
 			Imgproc.rectangle(mRgba,teethArray[0].tl(),teethArray[0].br(),new Scalar(0,0,255),3);
@@ -1219,7 +1228,7 @@ public class MyAccessibilityService extends AccessibilityService implements Came
 		faceParams.gravity= Gravity.CENTER_HORIZONTAL;
 		faceParams.x=0;
 		faceParams.y=0;
-		faceParams.alpha= (float)0.19 ;
+		faceParams.alpha= (float) 0.2 ;
 		myWindowManager.addView(faceView,faceParams);
 
 		//**************************MAKING THE FACEVIEW SHOW FACE******************************//
